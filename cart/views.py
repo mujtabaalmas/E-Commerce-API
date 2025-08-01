@@ -28,16 +28,36 @@ class AddToCartView(APIView):
 
 
     
+# class CartView(APIView):
+#     def get(self, request):
+#         session_id = request.COOKIES.get('session_id')
+#         #session_id = request.headers.get('Session-id')
+#         if not session_id:
+#             return Response({"error": "Session-id in cookies missing"}, status=400)
+#         try:
+#             cart = Cart.objects.get(session_id=session_id)
+#             serializer = CartItemSerializer(cart.items.all(), many=True)
+#             return Response(serializer.data)
+#         except Cart.DoesNotExist:
+#             return Response([], status=200)
+
 class CartView(APIView):
     def get(self, request):
         session_id = request.COOKIES.get('session_id')
-        #session_id = request.headers.get('Session-id')
         if not session_id:
             return Response({"error": "Session-id in cookies missing"}, status=400)
         try:
             cart = Cart.objects.get(session_id=session_id)
-            serializer = CartItemSerializer(cart.items.all(), many=True)
-            return Response(serializer.data)
         except Cart.DoesNotExist:
-            return Response([], status=200)
+            return Response({"message": "Your Cart is Empty", "total_cart_price": 0.0}, status=200)
 
+        items = cart.items.all()
+        
+        serializer = CartItemSerializer(cart.items.all(), many=True)
+
+        total_price = sum(item.quantity * item.product.price for item in items)
+
+        return Response({
+            "items": serializer.data,
+            "total_cart_price": round(total_price, 2)
+        })

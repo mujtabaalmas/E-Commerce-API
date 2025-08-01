@@ -20,13 +20,14 @@ class CheckoutSerializer(serializers.Serializer):
         session_id = request.COOKIES.get('session_id')
 
         if not session_id:
-            raise serializers.ValidationError("Session ID is required  session id missing in cookies.")
-                
+            raise serializers.ValidationError("Session ID is required  session id missing in cookies.")  
         try:
             cart = Cart.objects.get(session_id=session_id)
         except Cart.DoesNotExist:
             raise serializers.ValidationError("No cart found for this session.")
         
+        if not cart.items.exists():
+            raise serializers.ValidationError("Your cart is empty. Cannot proceed to checkout.")
 
         customer, created = Customer.objects.get_or_create(
         session_id=session_id,

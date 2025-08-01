@@ -4,9 +4,18 @@ from products.models import Products
 
 class CartItemSerializer(serializers.ModelSerializer):
     product_title = serializers.CharField(source='product.title', read_only=True)
+    #product_price = serializers.DecimalField(source='product.price', max_digits=6,decimal_places=2) # display from models as strings 
+    product_price = serializers.SerializerMethodField()
+    total_price = serializers.SerializerMethodField()
     class Meta:
         model = CartItem
-        fields = ['id', 'quantity', 'product_title',]
+        fields = ['id', 'quantity', 'product_title','product_price','total_price']
+
+    def get_product_price(self, obj1):
+        return obj1.product.price 
+
+    def get_total_price(self, obj):
+        return obj.quantity * obj.product.price
 
     # def create(self, validated_data):
     #     session_id = self.context.get('session_id')  # only use context
@@ -31,6 +40,7 @@ class CartItemSerializer(serializers.ModelSerializer):
 class AddToCartSerializer(serializers.Serializer):
     product_id = serializers.IntegerField()
     quantity = serializers.IntegerField()
+    #price = serializers.DecimalField(max_digits=6,decimal_places=2)
 
     def create(self, validated_data):
         request = self.context.get('request')
@@ -53,11 +63,12 @@ class AddToCartSerializer(serializers.Serializer):
         if not created:
             # Prevent cart quantity from exceeding available stock
             new_quantity = cart_item.quantity + validated_data['quantity']
+        
             if new_quantity > product.quantity:
                 raise serializers.ValidationError(f"Only {product.quantity} of this product is available in stock. Already Added {cart_item.quantity} products in your cart")
             
             cart_item.quantity = new_quantity
-            # if cart_item.quantity > product.quantity:
+                        # if cart_item.quantity > product.quantity:
             #     raise serializers.ValidationError(f"you have Already Added {cart_item.quantity} products in your cart")
 
         else:
@@ -71,5 +82,6 @@ class AddToCartSerializer(serializers.Serializer):
             'id': instance.id,
             'product_id ': instance.product.id,
             'product_title': instance.product.title,
-            'Total quantity': instance.quantity
+            'Total quantity': instance.quantity,
+            #'product_price': instance.price
         }

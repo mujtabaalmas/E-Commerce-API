@@ -44,7 +44,15 @@ INSTALLED_APPS = [
     'vendors',
     'rest_framework',
     'cart',
+    'rest_framework.authtoken',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'users.authentication.CookieTokenAuthentication',  #  my custom class
+    ]
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
